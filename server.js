@@ -1,9 +1,9 @@
 const express = require("express");
-const bodyParser = require("body-parser");
-const dotenv = require("dotenv");
+// const bodyParser = require("body-parser");
+// const dotenv = require("dotenv");
 
-// Load environment variables
-dotenv.config();
+// // Load environment variables
+// dotenv.config();
 
 
 // Check if environment variables are loaded
@@ -14,16 +14,16 @@ dotenv.config();
 // Initialize express app
 const app = express();
 
-app.use(bodyParser.json());
+// app.use(bodyParser.json());
 
-// Connect to the database
-require("./db");
+// // Connect to the database
+// require("./db");
 
 // Import routes
-const authRoutes = require("./routes/auth");
+// const authRoutes = require("./routes/auth");
 
-// Use routes
-app.use("/api/auth", authRoutes); // Make sure authRoutes is a function, not an object
+// // Use routes
+// app.use("/api/auth", authRoutes); // Make sure authRoutes is a function, not an object
 
 // Define the root route
 app.get("/", (req, res) => {
