@@ -1,8 +1,9 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const User = require("../Models/User");
-const proauth = require("../middleware/authmiddle");
+const User = require("../models/User");
+const authmiddle = require("../middleware/authmiddle");
+const allowRoles = require("../middleware/roles");
 
 const router = express.Router();
 
@@ -25,6 +26,7 @@ router.post("/signup", async (req, res) => {
       username,
       email,
       password: hashPassword,
+      role: "student",
     });
 
     // Save the user to the database
@@ -55,7 +57,7 @@ router.post("/login", async (req, res) => {
 
     // Generate JWT
     const token = jwt.sign(
-      { _id: user._id, email: user.email },
+      { _id: user._id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
@@ -67,15 +69,60 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// Route to promote a student to instructor
+router.put(
+  "/promote/:id",
+  authmiddle,
+  allowRoles("admin"),
+  async (req, res) => {
+    try {
+      const user = await User.findByIdAndUpdate(
+        req.params.id,
+        { role: "instructor" },
+        { new: true }
+      );
+      if (!user) {
+        return res.status(404).send("User not found");
+      }
+      res.status(200).send("User promoted to instructor");
+    } catch (error) {
+      console.error("Error:", error);
+      res.status(500).send("Failed to promote user");
+    }
+  }
+);
+
+// Route to delete a user
+router.delete(
+  "/user/:id",
+  authmiddle,
+  allowRoles("admin"),
+  async (req, res) => {
+    try {
+      const user = await User.findByIdAndDelete(req.params.id);
+      if (!user) {
+        return res.status(404).send("User not found");
+      }
+      res.status(200).send("User deleted successfully");
+    } catch (error) {
+      console.error("Error:", error);
+      res.status(500).send("Failed to delete user");
+    }
+  }
+);
+
 // Protected route example
-router.get("/protected", proauth, (req, res) => {
+router.get("/protected", authmiddle, (req, res) => {
   res.send("This is a protected route");
 });
 
-
-// Protected route example
-router.get("/pro", proauth, (req, res) => {
-  res.send("This is a 2nd protected route");
+router.get("/pro", authmiddle, (req, res) => {
+  res.send("This is a protected route 2");
 });
+
+router.get("/me", authmiddle, (req, res) => {
+  res.send(req.user);
+});
+
 
 module.exports = router;
